@@ -9,6 +9,10 @@ from controlers.movementcontroler import all_movements, rev_movement, new_moveme
 from controlers.tonercontroler import all_toners, one_toner, plus_toner, less_toner, add_toner
 from controlers.sectorcontroler import all_sectors, del_sector, add_sector
 from controlers.validationcontroler import validar_salida_toner, validar_entrada_toner, validar_entrada_sector
+#import from bluuprint
+from routes.insumos_routes import insumos_bp
+from routes.movimientos_routes import movements_bp
+from routes.sectores_routes import sector_bp
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -17,83 +21,14 @@ db.init_app(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-#!---index---!
+app.register_blueprint(insumos_bp)
+app.register_blueprint(movements_bp)
+app.register_blueprint(sector_bp)
+
+
 @app.route('/')
 def index():
     return render_template('index.html', toners = all_toners(), sectors = all_sectors())
-
-#!---insumos---!
-@app.route('/insunmos', methods=['GET','POST'])
-def insumo():
-    return render_template('insumos.html', insumos = all_toners())
-
-app.route('/alta_sector', methods=['POST'])
-def alta_sector():
-    if request.method == 'POST':
-        insumo_nombre = request.form.get('insumo_nombre', type= str)
-
-        if validar_entrada_sector(insumo_nombre):
-            try:
-                add_toner(insumo_nombre, duracion_predefinida)
-                flash('Sector registrado exitosamente.', 'success')
-                return redirect(url_for('sectores'))   
-            
-            except Exception as e:
-                db.session.rollback()  # Revertir cambios si hay un error
-                flash(f'Error al registrar el sector: {e}', 'danger')
-        
-        return redirect(url_for('sectores'))
-
-
-@app.route('/salida_insunmo', methods=['GET','POST'])
-def salida_insumo():
-    if request.method == 'POST':
-        toner_id = request.form.get('toner_id')
-        sector_id = request.form.get('sector_id')
-        cantidad = request.form.get('cantidad', type=int)
-
-        if validar_salida_toner(toner_id, sector_id, cantidad):    
-            if less_toner(toner_id, cantidad):
-                return redirect(url_for('salida_insumo'))
-
-            new_movement('Salida', cantidad, toner_id, sector_id)
-
-    return render_template('salida_insumo.html', toners = all_toners(), sectors = all_sectors())
-
-@app.route('/entrada_insumo', methods=['GET','POST'])
-def entrada_insumo():
-    if request.method == 'POST':
-        toner_id = request.form.get('toner_id')
-        cantidad = request.form.get('cantidad', type=int)
-        
-        if validar_entrada_toner(toner_id, cantidad):
-            if plus_toner(toner_id, cantidad):
-                return redirect(url_for('entrada_insumo'))
-        
-            new_movement('Entrada', cantidad, toner_id)
-    return render_template('entrada_insumo.html', toners= all_toners())
-
-@app.route('/solicitar_insumos', methods=['GET', 'POST'])
-def solicitar_insumos():
-    if request.method == 'POST':
-        toner_ids = request.form.getlist('toners')
-        pedidos = {}
-
-        for toner_id in toner_ids:
-            toner = one_toner(toner_id)
-            if toner.preferences.proveedor_email in pedidos:
-                pedidos[toner.preferences.proveedor_email].append(toner)
-            else:
-                pedidos[toner.preferences.proveedor_email] = [toner]
-
-        for proveedor_email, toners in pedidos.items():
-            enviar_correo_pedido(proveedor_email, toners)
-
-        flash('Solicitud de insumos enviada con éxito', 'success')
-        return redirect(url_for('index'))
-
-    toners = Toner.query.all()
-    return render_template('solicitar_insumos.html', toners=toners)
 
 def enviar_correo_pedido(proveedor_email, toners):
     msg = Message(subject='Solicitud de Insumos',
@@ -131,44 +66,6 @@ def set_preferences():
     flash('Preferencias actualizadas con éxito', 'success')
     return redirect(url_for('preferences'))
 
-#!---movimientos---!
-@app.route('/movements')
-def movements():
-    return render_template('movements.html', movimientos = all_movements())
-
-@app.route('/revert_movement/<int:movement_id>', methods=['POST'])
-def revert_movement(movement_id):
-    rev_movement(movement_id)
-    return redirect(url_for('movements'))
-
-#!---sectores---!
-@app.route('/sectores')
-def sectores():
-    return render_template('sectores.html', sectores = all_sectors())
-
-@app.route('/delete_sector/<int:sector_id>', methods=['POST'])
-def delete_sector(sector_id):
-    del_sector(sector_id)
-    return redirect(url_for('sectores'))
-
-@app.route('/alta_sector', methods=['POST'])
-def alta_sector():
-    if request.method == 'POST':
-        insumo_nombre = request.form.get('insumo_nombre', type= str)
-        duracion_predefinida = request.form.get('duracion_predefinida', type= int)
-
-        if validar_entrada_sector(insumo_nombre, duracion_predefinida):
-            try:
-                add_sector(insumo_nombre, duracion_predefinida)
-                flash('Sector registrado exitosamente.', 'success')
-                return redirect(url_for('sectores'))   
-            
-            except Exception as e:
-                db.session.rollback()  # Revertir cambios si hay un error
-                flash(f'Error al registrar el sector: {e}', 'danger')
-        
-        return redirect(url_for('sectores'))
-
 @app.route('/statistics')
 def statistics():
     consumos_por_sector = db.session.query(
@@ -179,8 +76,6 @@ def statistics():
     graph_html = df_consumos.to_html(classes='table table-bordered')
 
     return render_template('statistics.html', graph_html=graph_html)
-
-
 
 
 if __name__ == '__main__':

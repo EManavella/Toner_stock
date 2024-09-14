@@ -19,7 +19,7 @@
                 <td>{{ insumo.modelo }}</td>
                 <td>{{ insumo.cantidad_actual }}</td>
                 <td>
-                    <form action="{{ url_for('delete_insumo', insumo_id = insumo.id) }}" method="post">
+                    <form action="{{ url_for('insumos.delete_insumo', insumo_id = insumo.id) }}" method="post">
                         <button type="submit">Eliminar</button>
                     </form>     
                 </td>
@@ -31,7 +31,7 @@
 </div>
 <div class="container">
     <h2>Alta de Insumos</h2>
-        <form action="{{ url_for('alta_insumo') }}" method="post">
+        <form action="{{ url_for('insumos.alta_insumo') }}" method="post">
             <div class="form-group"></div>
                 <label for="insumo_tipo">Tipo:</label>
                 <input type="text" name="insumo_tipo" id="insumo_tipo" class="form-control">

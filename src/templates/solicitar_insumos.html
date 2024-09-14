@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <h2>Solicitar Insumos</h2>
-    <form action="{{ url_for('solicitar_insumos') }}" method="post">
+    <form action="{{ url_for('insumos.solicitar_insumos') }}" method="post">
         <div class="form-group">
             <label for="toners">Selecciona los Insumos:</label>
             <select multiple name="toners" id="toners" class="form-control">
