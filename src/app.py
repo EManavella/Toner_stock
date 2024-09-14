@@ -6,7 +6,7 @@ import pandas as pd
 from models import db, Toner, Movement, Sector, Preferences
 #import from controlers
 from controlers.movementcontroler import all_movements, rev_movement, new_movement
-from controlers.tonercontroler import all_toners, one_toner, plus_toner, less_toner
+from controlers.tonercontroler import all_toners, one_toner, plus_toner, less_toner, add_toner
 from controlers.sectorcontroler import all_sectors, del_sector, add_sector
 from controlers.validationcontroler import validar_salida_toner, validar_entrada_toner, validar_entrada_sector
 
@@ -23,6 +23,28 @@ def index():
     return render_template('index.html', toners = all_toners(), sectors = all_sectors())
 
 #!---insumos---!
+@app.route('/insunmos', methods=['GET','POST'])
+def insumo():
+    return render_template('insumos.html', insumos = all_toners())
+
+app.route('/alta_sector', methods=['POST'])
+def alta_sector():
+    if request.method == 'POST':
+        insumo_nombre = request.form.get('insumo_nombre', type= str)
+
+        if validar_entrada_sector(insumo_nombre):
+            try:
+                add_toner(insumo_nombre, duracion_predefinida)
+                flash('Sector registrado exitosamente.', 'success')
+                return redirect(url_for('sectores'))   
+            
+            except Exception as e:
+                db.session.rollback()  # Revertir cambios si hay un error
+                flash(f'Error al registrar el sector: {e}', 'danger')
+        
+        return redirect(url_for('sectores'))
+
+
 @app.route('/salida_insunmo', methods=['GET','POST'])
 def salida_insumo():
     if request.method == 'POST':
@@ -132,12 +154,12 @@ def delete_sector(sector_id):
 @app.route('/alta_sector', methods=['POST'])
 def alta_sector():
     if request.method == 'POST':
-        sector_name = request.form.get('sector_name', type= str)
+        insumo_nombre = request.form.get('insumo_nombre', type= str)
         duracion_predefinida = request.form.get('duracion_predefinida', type= int)
 
-        if validar_entrada_sector(sector_name, duracion_predefinida):
+        if validar_entrada_sector(insumo_nombre, duracion_predefinida):
             try:
-                add_sector(sector_name, duracion_predefinida)
+                add_sector(insumo_nombre, duracion_predefinida)
                 flash('Sector registrado exitosamente.', 'success')
                 return redirect(url_for('sectores'))   
             

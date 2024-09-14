@@ -12,7 +12,11 @@ def one_sector(sector_id):
         return Sector.query.get(sector_id)
     
 def add_sector(nombre = str, duracion_predefinida = int):
-    new_sector = Sector(nombre = nombre, duracion_predefinida = duracion_predefinida)
+    new_sector = Sector(
+        nombre = nombre, 
+        duracion_predefinida = duracion_predefinida, 
+        estado = True)
+    
     db.session.add(new_sector)
     db.session.commit()
 

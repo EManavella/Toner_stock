@@ -19,9 +19,9 @@ class Sector(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(64), unique=True, nullable=False)
     duracion_predefinida = db.Column(db.Integer, nullable=False)
+    estado = db.Column(db.Boolean, default=False, nullable=False)
 
 class Movement(db.Model):
-    #agregar fecha-hora
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     tipo = db.Column(db.String(10), nullable=False)  # 'Entrada' or 'Salida'
